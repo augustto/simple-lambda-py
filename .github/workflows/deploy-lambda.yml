@@ -1,0 +1,51 @@
+name: Deploy AWS Lambda
+
+on:
+  push:
+    branches:
+      - main  # Executa o deploy quando houver um push na branch main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Instalar dependências
+        run: |
+          pip install -r requirements.txt -t .
+
+      - name: Criar pacote ZIP da função Lambda
+        run: zip -r lambda_function.zip . -x "*.git*" "*.github*"
+
+      - name: Criar ou atualizar a função Lambda
+        run: |
+          # Nome da função Lambda
+          LAMBDA_NAME="simple-store-lambda"
+
+          # Verifica se a função existe
+          if aws lambda get-function --function-name $LAMBDA_NAME > /dev/null 2>&1; then
+              echo "🚀 A função '$LAMBDA_NAME' já existe. Atualizando código..."
+              aws lambda update-function-code \
+                --function-name $LAMBDA_NAME \
+                --zip-file fileb://lambda_function.zip
+          else
+              echo "⚡ A função '$LAMBDA_NAME' não existe. Criando..."
+              aws lambda create-function \
+                --function-name $LAMBDA_NAME \
+                --runtime python3.8 \
+                --role arn:aws:iam::SEU-ID-AWS:role/ROLE-PARA-LAMBDA \
+                --handler simple_store.lambda_handler \
+                --timeout 15 \
+                --memory-size 128 \
+                --zip-file fileb://lambda_function.zip
+          fi
