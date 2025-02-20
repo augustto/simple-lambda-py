@@ -6,15 +6,19 @@ def lambda_handler(event, context):
         {"id": 2, "name": "Summer Clearance", "date": "2025-07-15", "location": "Online"}
     ]
 
-    if event.get('path') == '/events' and event.get('httpMethod') == 'GET':
+    # API Gateway usa "resource" em vez de "path"
+    path = event.get('path') or event.get('resource')
+    method = event.get('httpMethod')
+
+    if path == '/events' and method == 'GET':
         return {
             "statusCode": 200,
-            "body": json.dumps({"events": store_events}),  
+            "body": json.dumps({"events": store_events}),
             "headers": {"Content-Type": "application/json"}
         }
     else:
         return {
             "statusCode": 404,
-            "body": json.dumps({"error": "Rota não encontrada"}), 
+            "body": json.dumps({"error": "Rota não encontrada"}),
             "headers": {"Content-Type": "application/json"}
         }
