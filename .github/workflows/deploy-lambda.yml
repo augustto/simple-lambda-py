@@ -22,7 +22,7 @@ jobs:
 
       - name: Instalar dependências
         run: |
-          pip install -r requirements.txt -t .
+          if [ -f requirements.txt ]; then pip install -r requirements.txt -t .; else echo "Nenhum requirements.txt encontrado, ignorando instalação"; fi
 
       - name: Criar pacote ZIP da função Lambda
         run: zip -r lambda_function.zip . -x "*.git*" "*.github*"
@@ -32,6 +32,12 @@ jobs:
           # Nome da função Lambda
           LAMBDA_NAME="simple-store-lambda"
           LAMBDA_ROLE_ARN="${{ secrets.AWS_LAMBDA_ROLE_ARN }}"
+
+          # Verifica se a role está configurada corretamente
+          if [[ -z "$LAMBDA_ROLE_ARN" ]]; then
+            echo "Erro: AWS_LAMBDA_ROLE_ARN não está definido nos secrets."
+            exit 1
+          fi
 
           # Verifica se a função existe
           if aws lambda get-function --function-name $LAMBDA_NAME > /dev/null 2>&1; then
