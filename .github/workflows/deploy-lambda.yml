@@ -3,7 +3,7 @@ name: Deploy AWS Lambda
 on:
   push:
     branches:
-      - main  # Executa o deploy quando houver um push na branch main
+      - main # Executa o deploy quando houver um push na branch main
 
 jobs:
   deploy:
@@ -31,6 +31,7 @@ jobs:
         run: |
           # Nome da função Lambda
           LAMBDA_NAME="simple-store-lambda"
+          LAMBDA_ROLE_ARN="${{ secrets.AWS_LAMBDA_ROLE_ARN }}"
 
           # Verifica se a função existe
           if aws lambda get-function --function-name $LAMBDA_NAME > /dev/null 2>&1; then
@@ -43,7 +44,7 @@ jobs:
               aws lambda create-function \
                 --function-name $LAMBDA_NAME \
                 --runtime python3.8 \
-                --role arn:aws:iam::SEU-ID-AWS:role/ROLE-PARA-LAMBDA \
+                --role $LAMBDA_ROLE_ARN \
                 --handler simple_store.lambda_handler \
                 --timeout 15 \
                 --memory-size 128 \
